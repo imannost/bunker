@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Присоединиться к игре</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #0f1117;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --pink: #ec4899;
+      --pink-hover: #db2777;
+      --border: #374151;
+      --shadow: rgba(0,0,0,0.4);
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0 20px;
+    }
+    form {
+      background: var(--panel);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px var(--shadow);
+      max-width: 380px;
+      width: 100%;
+      margin: 0 auto;
+      border: 1px solid var(--border);
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 25px;
+      color: var(--text);
+      text-align: center;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--muted);
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+      font-size: 1em;
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    .btn-row { display: flex; gap: 10px; }
+    .btn-row .btn { flex: 1; }
+    button, .btn {
+      width: 100%;
+      background: var(--pink);
+      color: white;
+      padding: 14px 0;
+      font-weight: 700;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    button:hover, .btn:hover { background: var(--pink-hover); }
+  </style>
+</head>
+<body>
+  <form method="post" action="{{ url_for('join') }}">
+    <h2>Присоединиться к игре</h2>
+    <label for="game_code">Код игры (3 цифры)</label>
+    <input type="text" id="game_code" name="game_code" pattern="\d{3}" maxlength="3" required autocomplete="off" />
+    
+    <label for="player_name">Ваше имя</label>
+    <input type="text" id="player_name" name="player_name" required maxlength="20" autocomplete="off" />
+    
+    <div class="btn-row">
+      <a class="btn" href="{{ url_for('index') }}">Назад</a>
+      <button type="submit">Войти</button>
+    </div>
+  </form>
+</body>
+</html>

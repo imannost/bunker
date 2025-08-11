@@ -1,0 +1,1397 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Кпоп бункер</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --pink: #ec4899;
+      --pink-hover: #db2777;
+      --green: #10b981;
+      --green-dark: #065f46;
+      --blue: #3b82f6;
+      --blue-hover: #2563eb;
+      --red: #ef4444;
+      --red-dark: #7f1d1d;
+      --border: #374151;
+      --shadow: rgba(0,0,0,0.4);
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      grid-template-rows: 60px 1fr;
+      height: 100vh;
+    }
+
+    header {
+      grid-column: 1 / 3;
+      background-color: var(--panel);
+      color: var(--text);
+      padding: 12px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+        display: block;
+        font-size: 1.17em;
+        margin-block-start: 0.4em;
+        margin-block-end: 0.4em;
+        margin-inline-start: 0px;
+        margin-inline-end: 0px;
+        font-weight: bold;
+        unicode-bidi: isolate;
+    }
+
+    .info-btn {
+      display: none;
+      background: var(--pink);
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .game-info {
+      font-size: 0.9em;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .players-container {
+      display: flex;
+      gap: 10px;
+      padding: 10px 16px;
+      overflow-x: auto;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x proximity;
+    }
+
+    .player-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 90px;
+      padding: 10px 8px;
+      border-radius: 10px;
+      background: var(--panel-2);
+      color: var(--text);
+      cursor: pointer;
+      border: 1px solid var(--border);
+      transition: transform .15s ease, box-shadow .2s ease;
+      scroll-snap-align: start;
+      flex: 0 0 auto;
+    }
+
+    .player-badge:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px var(--shadow);
+    }
+
+    .player-badge.selected {
+      box-shadow: 0 0 0 2px var(--pink);
+    }
+
+    .player-badge.exit {
+      background: var(--red);
+      border-color: var(--red-dark);
+    }
+
+    .player-badge.admin {
+      background: #f9fafb;
+      color: #111827;
+      border-color: #e5e7eb;
+    }
+    .player-badge.admin .player-number { color: #111827; }
+    .player-badge.admin .player-name { color: #111827; }
+
+    .player-badge.exit .player-number { color: #ffffff; }
+    .player-badge.exit .player-name { color: #ffffff; }
+
+
+    .player-number {
+      font-weight: bold;
+      font-size: 1.1em;
+      color: var(--pink);
+    }
+
+    .player-name {
+      font-size: 0.9em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      color: var(--text);
+    }
+
+    .sidebar {
+      grid-column: 2;
+      grid-row: 2;
+      background: var(--panel);
+      color: var(--text);
+      padding: 20px;
+      overflow-y: auto;
+      border-left: 1px solid var(--border);
+    }
+
+    .player-card {
+      grid-column: 1;
+      grid-row: 2;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .field {
+      margin-bottom: 15px;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 2px 6px var(--shadow);
+    }
+    .field-row {
+      display: flex;        /* в одну линию */
+      gap: 0.5em;           /* расстояние между подписью и значением */
+      align-items: baseline;/* чтобы текст был на одной линии по базовой линии */
+    }
+
+    .field-name {
+      font-weight: bold;
+      color: var(--pink);
+      margin-bottom: 6px;
+    }
+    .field-value {
+      margin-bottom: 6px;
+    }
+
+    .field-value {
+      min-height: 24px;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Утилиты для неизменяемых строк */
+    .no-wrap { white-space: nowrap; }
+    .inline-row { display: inline-flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+
+    /* Вертикальный список для персональных навыков */
+    .skills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+    .open-skill-btn {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:40px;
+        height:100%;
+        padding:6px 8px;
+        border-radius:8px;
+        font-weight:600;
+        margin-left: auto;
+        flex-shrink: 0;
+
+    }
+    .reveal-btn, .edit-toggle-btn {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        min-width:40px;
+        height:36px;
+        padding:6px 8px;
+        border-radius:8px;
+        font-weight:600;
+        margin-left: auto;
+        flex-shrink: 0;
+    }
+
+    .field .field-actions {
+        margin-left:auto;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        min-width:96px; /* зарезервированное место для кнопок */
+        justify-content:flex-end;
+    }
+    .reveal-btn:hover, .edit-toggle-btn:hover {
+        background: var(--pink-hover);
+    }
+
+    /* Отметка раскрытых полей (инверсия) */
+    .field.revealed {
+      background: var(--text);
+      color: #111827;
+    }
+    .field.revealed .field-name { color: #111827; }
+    .field.revealed .field-value { color: #111827; }
+    .field .field-actions { margin-left: auto; display: inline-flex; }
+
+    /* Карточки секция */
+    .cards-section { margin-top: 18px; }
+    .cards-title { font-weight: 800; margin: 8px 0 10px; color: var(--text); }
+    .card-item {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .card-item .card-name { font-weight: 700; margin-bottom: 6px; }
+    .card-cond { background: rgba(239,68,68,0.15); border-color: var(--red-dark); }
+    .card-ev { background: rgba(16,185,129,0.15); border-color: var(--green-dark); }
+    .card-item .reveal-btn { margin-left: 0; }
+    .card-cond.revealed { background: rgba(239,68,68,0.35); border-color: var(--red); }
+    .card-ev.revealed { background: rgba(16,185,129,0.35); border-color: var(--green); }
+
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      header { position: sticky; top: 0; z-index: 10; }
+      .player-card { padding-bottom: 110px; }
+      .info-btn { display: inline-block; }
+      .players-container {
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--border);
+        border-bottom: none;
+      }
+    }
+
+    /* Мобильное оверлей-меню с инфо */
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+    .sidebar-overlay.open { display: flex; }
+    .sidebar-panel {
+      width: min(92vw, 420px);
+      max-height: 80vh;
+      overflow: auto;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+    .sidebar-panel .close-btn {
+      background: var(--pink);
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+    }
+    .close-btn {
+        background: var(--pink-hover) !important;
+        color: white !important;
+        border: none !important;
+        padding: 12px !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        transition: background 0.2s !important;
+        text-align: center;
+        flex: 1;
+    }
+
+    .close-btn:hover {
+        background: var(--pink-hover) !important;
+    }
+    
+    .admin-panel {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px solid #ccc;
+    }
+    
+    .admin-btn {
+      background: #d32f2f;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 5px;
+      display: block;
+      width: 100%;
+    }
+
+    .reveal-all-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      width: 100%;
+    }
+
+    .reveal-all-container {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border);
+        }
+
+    .reveal-all-btn:hover {
+        background: var(--pink-hover);
+    }
+    .edit-form {
+        display: flex;
+        gap: 8px;
+        width: 100%;
+        margin-top: 8px;
+    }
+
+    .editable-field {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--panel-2);
+        color: var(--text);
+    }
+
+    .submit-btn {
+        background: var(--pink);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .submit-btn:hover {
+        background: var(--pink-hover);
+    }
+    .edit-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .values-display {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .old-value {
+        text-decoration: line-through;
+        color: var(--muted);
+        opacity: 0.7;
+    }
+
+    .current-value {
+        color: var(--text);
+    }
+    .field.revealed .current-value {
+        color: #000; /* Чёрный цвет */
+    }
+        /* Новые стили для модального окна редактирования */
+    .edit-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .edit-modal.open { display: flex; }
+    .edit-panel {
+      width: min(92vw, 500px);
+      max-height: 80vh;
+      overflow: auto;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+    .edit-panel h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: var(--pink);
+    }
+    .skill-edit-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+    .skill-edit-item:last-child {
+      border-bottom: none;
+    }
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .edit-form label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    .edit-form input {
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    .edit-form .submit-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    .edit-form .submit-btn:hover {
+      background: var(--pink-hover);
+    }
+    /* Добавляем стили для строки кнопок */
+    .buttons-row {
+        display: flex;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .submit-btn, .close-btn {
+        padding: 12px !important;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        text-align: center;
+        transition: background 0.2s;
+    }
+
+    /* размеры кнопок 25% / 75% в строке */
+    .buttons-row .close-btn.small {
+        flex: 0 0 25%;
+        background: var(--pink-hover);
+        color: white;
+        border: none;
+    }
+    .buttons-row .submit-btn.large {
+        flex: 0 0 75%;
+        background: var(--pink);
+        color: white;
+        border: none;
+    }
+
+    .submit-btn:hover {
+        background: var(--pink-hover);
+    }
+
+    .edit-form .close-btn {
+        background: var(--pink-hover);
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .edit-form .close-btn:hover {
+        background: var(--pink-hover);
+    }
+    /* Стили для обновлённой формы навыков */
+    .skill-row {
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .skill-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 700;
+        font-size: 0.98em;
+    }
+
+    .skill-current {
+        color: var(--muted);
+        font-weight: 600;
+    }
+
+    .skill-new {
+        display:flex;
+        gap:8px;
+        align-items: center;
+    }
+
+    .delta-wrap {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:6px;
+    }
+
+    .delta-value {
+    min-width:48px;
+    font-weight:700;
+    }
+
+    .delta-bar { background:#2d3340; border-radius:6px; overflow:hidden; }
+    .delta-bar-fill { height:100%; transition: width .25s ease, background-color .2s ease; }
+    .delta-positive { background: linear-gradient(90deg, #10b981, #34d399); } /* зелёный */
+    .delta-negative { background: linear-gradient(90deg, #ef4444, #f97316); } /* красный/оранжевый */
+
+
+    .skill-note {
+    font-size:0.85em;
+    color:var(--muted);
+    }
+
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="game-info">
+    Вы: <strong>{{ current_player_name }}</strong> | 
+    Код игры: <strong>{{ code }}</strong>
+  </div>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <form method="get" action="{{ url_for('game') }}">
+      <button type="submit" class="info-btn" style="background:var(--panel-2); border:1px solid var(--border);">Обновить</button>
+    </form>
+    <button class="info-btn" onclick="toggleSidebar()">Инфо</button>
+  </div>
+</header>
+
+<div class="players-container" id="playersContainer">
+  {% if is_master %}
+    <div class="player-badge admin" onclick="persistPlayersScroll(); location.href='{{ url_for('game') }}?reveal_all=1&keep_info=1&selected={{ selected }}'">
+      <div class="player-number">★</div>
+      <div class="player-name">Открыть всё</div>
+    </div>
+  {% endif %}
+  {% for p in players %}
+    <div class="player-badge {% if selected == loop.index0 %}selected{% endif %}"
+         onclick="selectPlayer({{ loop.index0 }})">
+      <div class="player-number">{{ loop.index }}</div>
+      <div class="player-name">{{ p.name if p.name else 'Игрок ' ~ loop.index }}</div>
+    </div>
+  {% endfor %}
+  <div class="player-badge exit" onclick="persistPlayersScroll(); location.href='{{ url_for('exit_game') }}'">
+    <div class="player-number">⇦</div>
+    <div class="player-name">Выход</div>
+  </div>
+</div>
+
+<div class="player-card">
+  {% set ns = namespace(conditions=None, actions=None, cond_revealed=False, act_revealed=False) %}
+  {% for field in selected_player.fields %}
+    {% if field.name in ['Условия', 'Действия'] %}
+      {% if field.name == 'Условия' %}{% set ns.conditions = field.value %}{% set ns.cond_revealed = field.revealed %}{% endif %}
+      {% if field.name == 'Действия' %}{% set ns.actions = field.value %}{% set ns.act_revealed = field.revealed %}{% endif %}
+    {% elif field.name == 'Персональный навык' %}
+      <div class="field {% if field.revealed %}revealed{% endif %}">
+        <div class="field-name">{{ field.name }}</div>
+        <div class="field-value">
+          {% if field.revealed or is_current_player %}
+            {% if field.value %}
+                <div class="skills-list" style="margin:0;padding:0;">
+  {% set base_map = {} %}
+  {% if 'base_value' in field %}
+    {% for b in field.base_value %}
+      {% set _ = base_map.update({ b['навык']: b['оценка']|int }) %}
+    {% endfor %}
+  {% endif %}
+
+  {% for item in field.value %}
+    {% set skill = item['навык'] %}
+    {% set score = item['оценка']|int %}
+    {% set base_score = base_map.get(skill, score) %}
+    <div style="margin:0;padding:2px 0;">
+      <div style="display:flex;justify-content:space-between;font-size:0.95em;">
+        <span>{{ skill }}</span>
+        <span>
+          {{ score }}/10
+          {% if score != base_score %}
+            <div style="font-size:0.8em; color: {% if score > base_score %}#4caf50{% else %}#f44336{% endif %};">
+              {% if score > base_score %}+{{ score - base_score }}{% else %}{{ score - base_score }}{% endif %}
+            </div>
+          {% endif %}
+        </span>
+      </div>
+      <div style="height:8px;background:#2d3340;border-radius:6px;overflow:hidden;">
+        <div style="height:100%;width:{{ (score/10*100)|round(0,'floor') }}%;background: var(--pink);"></div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+            {% else %}
+              Не указано
+            {% endif %}
+            {% if is_current_player and not field.revealed %}
+              <form action="{{ url_for('game') }}" method="GET" style="margin-left:auto;">
+                <input type="hidden" name="reveal_field" value="{{ field.name }}">
+                <input type="hidden" name="selected" value="{{ selected }}">
+                <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+              </form>
+            {% endif %}
+
+            {% if is_current_player or (is_master and field.revealed) %}
+            <button
+            class="open-skill-btn"
+            title="Редактировать"
+            data-field-name='{{ field.name | tojson | replace("'", "&#x27;") }}'
+            data-player='{{ selected }}'
+            data-skills='{{ field.value | tojson | replace("'", "&#x27;") }}'
+            >✏️</button>
+            {% endif %}
+          {% else %}
+            <em>Скрыто</em>
+          {% endif %}
+        </div>
+      </div>
+    {% else %}
+      <div class="field {% if field.revealed %}revealed{% endif %}">
+        <div class="field-name">{{ field.name }}</div>
+        <div class="field-value">
+          {% if field.revealed %}
+            <div class="values-display">
+              {% if 'old_value' in field and field.old_value != field.value %}
+                <span class="old-value">{{ field.old_value if field.old_value else "Не указано" }}</span>
+              {% endif %}
+              <span class="current-value">{{ field.value if field.value else "Не указано" }}</span>
+            </div>
+            
+            {# Правило показа кнопки Редактировать: владелец карточки всегда; мастер — только для раскрытых полей #}
+            {% if is_current_player or (is_master and field.revealed) %}
+            <button
+            class="edit-toggle-btn open-edit-btn"
+            title="Редактировать"
+            data-field-name='{{ field.name | tojson | replace("'", "&#x27;") }}'
+            data-player='{{ selected }}'
+            data-value='{{ field.value | tojson | replace("'", "&#x27;") }}'
+            >✏️</button>
+
+            {% endif %}
+          {% else %}
+            {% if is_current_player %}
+              <span>{{ field.value if field.value else "Не указано" }}</span>
+              <span class="field-actions">
+                <form action="{{ url_for('game') }}" method="GET">
+                  <input type="hidden" name="reveal_field" value="{{ field.name }}">
+                  <input type="hidden" name="selected" value="{{ selected }}">
+                  <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+                </form>
+                {# Добавляем кнопку редактировать для владельца, даже если поле скрыто #}
+                <button
+                class="edit-toggle-btn open-edit-btn"
+                title="Редактировать"
+                data-field-name='{{ field.name | tojson | replace("'", "&#x27;") }}'
+                data-player='{{ selected }}'
+                data-value='{{ field.value | tojson | replace("'", "&#x27;") }}'
+                >✏️</button>
+              </span>
+            {% else %}
+              <em>Скрыто</em>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  <div class="cards-section">
+    <div class="cards-title">Карточки</div>
+    <div class="card-item card-cond {% if ns.cond_revealed %}revealed{% endif %}">
+      <div class="card-name">Условия</div>
+      <div class="field-value">
+        {% if ns.cond_revealed %}
+          {{ ns.conditions if ns.conditions else '—' }}
+        {% else %}
+          {% if is_current_player %}
+            {{ ns.conditions if ns.conditions else '—' }}
+            <form action="{{ url_for('game') }}" method="GET">
+              <input type="hidden" name="reveal_field" value="Условия">
+              <input type="hidden" name="selected" value="{{ selected }}">
+              <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+            </form>
+          {% else %}
+            <em>Скрыто</em>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <div class="card-item card-ev {% if ns.act_revealed %}revealed{% endif %}">
+      <div class="card-name">Действия</div>
+      <div class="field-value">
+        {% if ns.act_revealed %}
+          {{ ns.actions if ns.actions else '—' }}
+        {% else %}
+          {% if is_current_player %}
+            {{ ns.actions if ns.actions else '—' }}
+            <form action="{{ url_for('game') }}" method="GET">
+              <input type="hidden" name="reveal_field" value="Действия">
+              <input type="hidden" name="selected" value="{{ selected }}">
+              <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+            </form>
+          {% else %}
+            <em>Скрыто</em>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% if (is_master or is_current_player) and not all_revealed %}
+    <div class="field-value">
+      <form action="{{ url_for('reveal_all_player_fields') }}" method="GET" style="width: 100%;">
+        <input type="hidden" name="player_index" value="{{ selected }}">
+        <button type="submit" class="reveal-all-btn">
+          {% if is_master and not is_current_player %}
+          Открыть все характеристики игрока
+          {% else %}
+          Открыть все мои характеристики
+          {% endif %}
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+<div class="sidebar">
+  <h3>{{ bunker.A or bunker['A'] }}</h3>
+  {% if bunker %}
+  <div class="field-value">{{ bunker.B or bunker['B'] }}</div>
+  <div class="field" style="margin-top:10px;">
+      <div class="field-value" style="display:block;">
+        <div class="field-row">
+          <div class="field-name">Продолжительность:</div>
+          <div class="field-value">{{ bunker.C or bunker['C'] }}</div>
+        </div>
+        {% set dval = bunker.D or bunker['D'] %}
+        {% if dval %}
+        <div class="field-row">
+          <div class="field-name">Пол:</div>
+          <div class="field-value">{{ dval }}</div>
+        </div>
+        {% endif %}
+        <div class="field-row">
+          <div class="field-name">Выживших: </div>
+          <div class="field-value">{{ survivors }} чел.</div>
+        </div>
+        {% if resources %}
+          <div class="field-name">Ресурсы:</div>
+          <div class="field-value">
+            {% for res in resources %}
+              {{ res }}{% if not loop.last %} <br> {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if producers %}
+          <div class="field-name">Выбор продюсера:</div>
+          <div class="field-value">
+            {% for prod in producers %}
+              {{ prod }}{% if not loop.last %} <br> {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+  </div>
+  {% endif %}
+
+  {% if random_event %}
+    <div class="field {% if event_revealed %}revealed{% endif %}" style="margin-top:10px;">
+      <div class="field-name">Случайное событие</div>
+      <div class="field-value" style="display:flex; width:100%;">
+        {% if event_revealed %}
+          <span>{{ random_event }}</span>
+        {% else %}
+          <span><em>Скрыто</em></span>
+          <form action="{{ url_for('game') }}" method="GET" style="margin-left:auto;">
+            <input type="hidden" name="reveal_field" value="__random_event__">
+            <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+  <p><strong>Всего игроков:</strong> {{ players|length }}</p>
+  <button onclick="location.href='{{ url_for('exit_game') }}'" 
+          style="background: #ec4899; color: white; border: none; padding: 12px; border-radius: 10px; margin-top: 20px; width: 100%; font-weight:700;"
+          onmouseover="this.style.background='#db2777'" onmouseout="this.style.background='#ec4899'">
+    Выйти из игры
+  </button>
+</div>
+
+<!-- Мобильная панель информации об игре -->
+<div id="sidebarOverlay" class="sidebar-overlay{% if open_info %} open{% endif %}" onclick="toggleSidebar()">
+  <div class="sidebar-panel" onclick="event.stopPropagation()">
+    <h3>{{ bunker.A or bunker['A'] }}</h3>
+    {% if bunker %}
+    <div class="field-value">{{ bunker.B or bunker['B'] }}</div>
+      <div class="field" style="margin-top:10px;">
+        <div class="field-value" style="display:block;">
+          <div class="field-row">
+            <div class="field-name">Продолжительность:</div>
+            <div class="field-value">{{ bunker.C or bunker['C'] }}</div>
+          </div>
+          {% set dval = bunker.D or bunker['D'] %}
+          {% if dval %}
+          <div class="field-row">
+            <div class="field-name">Пол:</div>
+            <div class="field-value">{{ dval }}</div>
+          </div>
+          {% endif %}
+          <div class="field-row">
+            <div class="field-name">Выживших: </div>
+            <div class="field-value">{{ survivors }} чел.</div>
+          </div>
+        {% if resources %}
+          <div class="field-name">Ресурсы:</div>
+          <div class="field-value">
+            {% for res in resources %}
+              {{ res }}{% if not loop.last %} <br> {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% if producers %}
+          <div class="field-name">Выбор продюсера:</div>
+          <div class="field-value">
+            {% for prod in producers %}
+              {{ prod }}{% if not loop.last %} <br> {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    {% if random_event %}
+      <div class="field {% if event_revealed %}revealed{% endif %}" style="margin-top:10px;">
+        <div class="field-name">Случайное событие</div>
+        <div class="field-value" style="display:flex; width:100%;">
+          {% if event_revealed %}
+            <span>{{ random_event }}</span>
+          {% else %}
+            <span><em>Скрыто</em></span>
+            <form action="{{ url_for('game') }}" method="GET" style="margin-left:auto;">
+              <input type="hidden" name="reveal_field" value="__random_event__">
+              <button type="submit" class="reveal-btn" title="Показать">👁️</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+    <p><strong>Всего игроков:</strong> {{ players|length }}</p>
+    <button class="close-btn" onclick="toggleSidebar()">Закрыть</button>
+  </div>
+  
+</div>
+
+<!-- Модальное окно для редактирования обычных полей -->
+<div id="editModal" class="edit-modal">
+  <div class="edit-panel" onclick="event.stopPropagation()">
+    <h3>Редактирование: <span id="editFieldTitle"></span></h3>
+    <form id="normalEditForm" action="{{ url_for('update_field') }}" method="POST">
+      <input type="hidden" name="player_index" id="editPlayerIndex">
+      <input type="hidden" name="field_name" id="editFieldName">
+      
+      <div class="edit-form">
+        <label style="min-width:120px;margin:0;">Текущее значение:</label>
+        <div id="currentFieldValue" style="padding: 10px; background: var(--panel-2); border-radius: 6px; min-width: 120px;"></div>
+        
+        <label for="newFieldValue" style="min-width:120px;margin:0;">Новое значение:</label>
+        <input type="text" id="newFieldValue" name="new_value" class="editable-field" placeholder="Введите новое значение">
+      </div>
+
+      <div class="buttons-row" style="margin-top:12px;">
+          <!-- Поменяли местами: сначала Закрыть 25%, затем Сохранить 75% -->
+          <button class="close-btn small" onclick="closeEditModal(); return false;">Закрыть</button>
+          <button type="submit" class="submit-btn large">Сохранить</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Модальное окно для редактирования навыков -->
+<div id="skillEditModal" class="edit-modal">
+  <div class="edit-panel" onclick="event.stopPropagation()">
+    <h3>Редактирование персональных навыков</h3>
+    <form id="skillsEditForm" action="{{ url_for('update_field') }}" method="POST">
+      <!-- Одна скрытая переменная player_index (заполняется из JS) -->
+      <input type="hidden" name="player_index" id="editSkillsPlayerIndex" value="">
+      
+      <div id="skillsFieldsContainer" style="margin-bottom: 20px;">
+        <!-- Здесь будут генерироваться поля для навыков через JS -->
+      </div>
+      
+    <div class="buttons-row">
+        <!-- поменяли местами: Close (25%) слева, Save (75%) справа -->
+        <button type="button" class="close-btn small" onclick="closeSkillEditModal()">Закрыть</button>
+        <button type="submit" class="submit-btn large">Сохранить</button>
+    </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleSidebar(){
+    var el = document.getElementById('sidebarOverlay');
+    if (!el) return;
+    
+    el.classList.toggle('open');
+    
+    // Обновляем URL при открытии/закрытии панели
+    var url = new URL(window.location.href);
+    if (el.classList.contains('open')) {
+      url.searchParams.set('keep_info', '1');
+    } else {
+      url.searchParams.delete('keep_info');
+    }
+    history.replaceState(null, '', url.toString());
+  }
+
+  function persistPlayersScroll(){
+    var c = document.getElementById('playersContainer');
+    if(!c) return;
+    try { sessionStorage.setItem('playersScroll_' + '{{ code }}', String(c.scrollLeft)); } catch(e) {}
+  }
+
+  function restorePlayersScroll(){
+    var c = document.getElementById('playersContainer');
+    if(!c) return;
+    try {
+      var v = sessionStorage.getItem('playersScroll_' + '{{ code }}');
+      if(v !== null){ c.scrollLeft = parseInt(v, 10) || 0; }
+    } catch(e) {}
+  }
+
+  function selectPlayer(idx){
+    persistPlayersScroll();
+    var url = new URL(window.location.href);
+    url.searchParams.set('selected', String(idx));
+    
+    // Если панель информации открыта, сохраняем `keep_info=1`
+    var sidebarOverlay = document.getElementById('sidebarOverlay');
+    if (sidebarOverlay && sidebarOverlay.classList.contains('open')) {
+      url.searchParams.set('keep_info', '1');
+    } else {
+      url.searchParams.delete('keep_info');
+    }
+    
+    window.location.href = url.toString();
+  }
+
+  function toggleEditForm(button) {
+    const fieldContainer = button.closest('.field-value');
+    const editForm = fieldContainer.querySelector('.edit-form');
+    const valuesDisplay = fieldContainer.querySelector('.values-display');
+    
+    // Переключаем видимость
+    if (editForm.style.display === 'none') {
+      editForm.style.display = 'flex';
+      button.textContent = 'Отмена';
+    } else {
+      editForm.style.display = 'none';
+      button.textContent = '✏️';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    restorePlayersScroll();
+    
+    // Обработка нажатия на текущее значение для быстрого редактирования
+    document.querySelectorAll('.current-value').forEach(el => {
+      el.addEventListener('click', function() {
+        const fieldContainer = this.closest('.field-value');
+        const editBtn = fieldContainer.querySelector('.edit-toggle-btn');
+        if (editBtn) {
+          editBtn.click();
+        }
+      });
+    });
+  });
+
+  function openEditModal(fieldName, playerIndex, currentValue) {
+    const modal = document.getElementById('editModal');
+    modal.classList.add('open');
+    
+    // Устанавливаем скрытые поля корректно
+    document.getElementById('editFieldTitle').textContent = String(fieldName);
+    document.getElementById('editPlayerIndex').value = String(playerIndex);
+    document.getElementById('editFieldName').value = String(fieldName);
+    // currentValue может быть нестрокой — преобразуем в читаемую форму
+    try {
+      if (currentValue === null || currentValue === undefined) {
+        document.getElementById('currentFieldValue').textContent = 'Не указано';
+        document.getElementById('newFieldValue').value = '';
+      } else if (typeof currentValue === 'object') {
+        document.getElementById('currentFieldValue').textContent = JSON.stringify(currentValue);
+        document.getElementById('newFieldValue').value = '';
+      } else {
+        document.getElementById('currentFieldValue').textContent = String(currentValue);
+        document.getElementById('newFieldValue').value = String(currentValue);
+      }
+    } catch (e) {
+      document.getElementById('currentFieldValue').textContent = String(currentValue);
+      document.getElementById('newFieldValue').value = String(currentValue || '');
+    }
+  }
+
+function openSkillEditModal(fieldName, playerIndex, skills) {
+  try {
+    // Нормализуем вход (skills может быть строкой JSON или уже массивом)
+    if (typeof skills === 'string') {
+      const s = skills.trim();
+      if (s === '') skills = [];
+      else {
+        try { skills = JSON.parse(s); }
+        catch (err) { console.warn('openSkillEditModal: failed parse skills, using []', err); skills = []; }
+      }
+    }
+    if (!Array.isArray(skills)) skills = [];
+
+    const modal = document.getElementById('skillEditModal');
+    if (!modal) return;
+    modal.classList.add('open');
+
+    const container = document.getElementById('skillsFieldsContainer');
+    container.innerHTML = ''; // очистим
+
+    // Скрытое поле field_name
+    container.insertAdjacentHTML('beforeend', `<input type="hidden" name="field_name" value="${String(fieldName).replace(/"/g,'&quot;')}">`);
+
+    // Устанавливаем верхний скрытый player_index
+    const topPlayerInput = document.getElementById('editSkillsPlayerIndex');
+    if (topPlayerInput) topPlayerInput.value = String(playerIndex);
+
+    // Если есть навыки — генерируем строку для каждого
+    skills.forEach((skill, index) => {
+      const sName = skill && skill['навык'] ? String(skill['навык']) : '';
+      const sScore = (skill && (skill['оценка'] !== undefined && skill['оценка'] !== null)) ? Number(skill['оценка']) : 0;
+
+      const safeName = sName.replace(/"/g, '&quot;');
+      const skillHtml = `
+        <div class="skill-row" data-index="${index}" data-original="${sScore}">
+          <div class="skill-top">
+            <div class="skill-title">${safeName}</div>
+            <div class="skill-current">Текущая оценка: <strong>${sScore}</strong>/10</div>
+          </div>
+
+          <div class="skill-new">
+            <label style="min-width:120px;margin:0;">Новая оценка:</label>
+            <input type="number" class="skill-input" name="skills[${index}][оценка]" min="0" max="10" step="1" value="${sScore}" style="width:92px; padding:8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--text);">
+            <!-- защищённое скрытое поле с именем навыка -->
+            <input type="hidden" name="skills[${index}][навык]" value="${safeName}">
+          </div>
+
+          <div class="delta-wrap">
+            <div class="delta-value">Δ <span class="delta-number">0</span></div>
+            <div class="delta-bar"><div class="delta-bar-fill delta-neutral" style="width:0%;"></div></div>
+          </div>
+        </div>
+      `;
+
+      container.insertAdjacentHTML('beforeend', skillHtml);
+    });
+
+    // Если навыков нет — создаём одну пустую строку (как до этого)
+    if (skills.length === 0) {
+      container.insertAdjacentHTML('beforeend', `
+        <div class="skill-row" data-index="0" data-original="0">
+          <div class="skill-top"><div class="skill-title">(Новый навык)</div><div class="skill-current">Текущая оценка: <strong>0</strong>/10</div></div>
+          <div class="skill-new">
+            <label style="min-width:120px;margin:0;">Новая оценка:</label>
+            <input type="number" class="skill-input" name="skills[0][оценка]" min="0" max="10" step="1" value="0" style="width:92px; padding:8px; border-radius:6px; border:1px solid var(--border); background:var(--panel-2); color:var(--text);">
+            <input type="hidden" name="skills[0][навык]" value="">
+          </div>
+          <div class="delta-wrap">
+            <div class="delta-value">Δ <span class="delta-number">0</span></div>
+            <div class="delta-bar"><div class="delta-bar-fill delta-neutral" style="width:0%;"></div></div>
+          </div>
+        </div>
+      `);
+    }
+
+    // Навесим обработчик на input-ы для обновления дельты и полоски
+    container.querySelectorAll('.skill-input').forEach(input => {
+      input.addEventListener('input', function() {
+        const row = this.closest('.skill-row');
+        if (!row) return;
+        const original = Number(row.dataset.original || 0);
+        let newVal = Number(this.value);
+        if (Number.isNaN(newVal)) newVal = 0;
+        // ограничение 0..10
+        if (newVal < 0) newVal = 0;
+        if (newVal > 10) newVal = 10;
+        this.value = Math.round(newVal);
+
+        const delta = newVal - original;
+        const deltaNumberEl = row.querySelector('.delta-number');
+        const barFill = row.querySelector('.delta-bar-fill');
+
+        deltaNumberEl.textContent = (delta > 0 ? '+' + delta : delta);
+
+        // процент для полоски: используем абсолютную разницу относительно диапазона 0..10
+        const pct = Math.min(100, Math.abs(delta) / 10 * 100);
+        barFill.style.width = pct + '%';
+
+        // цвет
+        barFill.classList.remove('delta-positive', 'delta-negative', 'delta-neutral');
+        if (delta > 0) barFill.classList.add('delta-positive');
+        else if (delta < 0) barFill.classList.add('delta-negative');
+        else barFill.classList.add('delta-neutral');
+      });
+
+      // Триггерим initial update, чтобы сразу показать нулевые дельты
+      input.dispatchEvent(new Event('input'));
+    });
+
+  } catch (error) {
+    console.error('Ошибка открытия редактора навыков:', error);
+    alert('Ошибка загрузки навыков (см. консоль).');
+  }
+}
+
+
+function closeEditModal() {
+  document.getElementById('editModal').classList.remove('open');
+  // Сбрасываем форму при закрытии
+  document.getElementById('normalEditForm').reset();
+  // очищаем содержимое отображения текущего значения
+  document.getElementById('currentFieldValue').textContent = '';
+}
+
+function closeSkillEditModal() {
+  document.getElementById('skillEditModal').classList.remove('open');
+  // Сбрасываем форму при закрытии
+  document.getElementById('skillsEditForm').reset();
+  // очищаем контейнер
+  document.getElementById('skillsFieldsContainer').innerHTML = '';
+  // очистим верхний player_index
+  const topPlayerInput = document.getElementById('editSkillsPlayerIndex');
+  if (topPlayerInput) topPlayerInput.value = '';
+}
+
+async function submitForm(formElement, closeFunction) {
+    try {
+        let body;
+        let contentType;
+        
+        // Для формы навыков собираем данные вручную
+        if (formElement.id === 'skillsEditForm') {
+            const skills = [];
+            formElement.querySelectorAll('.skill-row').forEach(row => {
+                const skillInput = row.querySelector('input[name$="[навык]"]');
+                const scoreInput = row.querySelector('input[name$="[оценка]"]');
+                if (skillInput && scoreInput) {
+                    skills.push({
+                        "навык": skillInput.value,
+                        "оценка": Number(scoreInput.value)
+                    });
+                }
+            });
+            
+            body = new URLSearchParams();
+            body.append('player_index', document.getElementById('editSkillsPlayerIndex').value);
+            body.append('field_name', document.querySelector('#skillsEditForm input[name="field_name"]').value);
+            body.append('new_value', JSON.stringify(skills));
+            contentType = 'application/x-www-form-urlencoded';
+        } 
+        // Для обычной формы используем стандартные данные
+        else {
+            body = new FormData(formElement);
+        }
+
+        const headers = {};
+        if (contentType) {
+            headers['Content-Type'] = contentType;
+        }
+
+        const response = await fetch(formElement.action, {
+            method: 'POST',
+            body: body,
+            credentials: 'same-origin',
+            headers: headers
+        });
+
+        const text = await response.text();
+        if (response.ok) {
+            closeFunction();
+            window.location.reload();
+        } else {
+            alert('Ошибка сохранения: ' + text);
+        }
+    } catch (error) {
+        alert('Сетевая ошибка: ' + error);
+    }
+}
+
+
+// Обновленные обработчики событий
+document.addEventListener('DOMContentLoaded', function() {
+    // Для обычной формы
+    const normalForm = document.getElementById('normalEditForm');
+    if (normalForm) {
+      normalForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          submitForm(this, closeEditModal);
+      });
+    }
+    
+    // Для формы навыков
+    const skillsForm = document.getElementById('skillsEditForm');
+    if (skillsForm) {
+      skillsForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          submitForm(this, closeSkillEditModal);
+      });
+    }
+    
+    // Закрытие по ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeEditModal();
+            closeSkillEditModal();
+        }
+    });
+});
+
+function persistCardScroll() {
+  const card = document.querySelector('.player-card');
+  if (card) {
+    sessionStorage.setItem('cardScroll_{{ code }}', card.scrollTop);
+  }
+}
+
+function restoreCardScroll() {
+  const card = document.querySelector('.player-card');
+  if (card) {
+    const saved = sessionStorage.getItem('cardScroll_{{ code }}');
+    if (saved !== null) {
+      card.scrollTop = parseInt(saved);
+      sessionStorage.removeItem('cardScroll_{{ code }}');
+    }
+  }
+}
+
+// Обновляем обработчики кнопок
+document.querySelectorAll('.reveal-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    persistCardScroll();
+    persistPlayersScroll();
+  });
+});
+
+// Восстанавливаем скролл при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  restorePlayersScroll();
+  restoreCardScroll();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  function safeParsePossibleJSON(raw) {
+    if (raw === undefined || raw === null) return null;
+    const s = String(raw).trim();
+    if (s === '') return null;
+    // Если строка выглядит как JSON (начинается с { [ или " ), попробуем парсить
+    if (/^[\{\[\"]/.test(s)) {
+      try {
+        return JSON.parse(s);
+      } catch (err) {
+        // Если парсинг упал — вернуть исходную строку без изменений
+        console.warn('safeParsePossibleJSON: parse failed, return raw', err, raw);
+        return raw;
+      }
+    }
+    return raw;
+  }
+
+  // Делегируем клики по кнопкам редактирования навыков
+  document.body.addEventListener('click', (ev) => {
+    const skillBtn = ev.target.closest('.open-skill-btn');
+    if (skillBtn) {
+      ev.preventDefault();
+      // читаем данные из атрибутов
+      const rawName = skillBtn.dataset.fieldName;
+      const playerIndex = Number(skillBtn.dataset.player);
+      const rawSkills = skillBtn.dataset.skills; // строка (JSON) или пусто
+      // передаём в вашу функцию: она умеет обрабатывать и строку, и массив
+      try {
+        // fieldName может быть JSON-строкой (в кавычках) — безопасно распарсим
+        let fieldName = safeParsePossibleJSON(rawName);
+        if (typeof fieldName === 'string' && fieldName.startsWith('"') && fieldName.endsWith('"')) {
+          try { fieldName = JSON.parse(fieldName); } catch(e) {}
+        }
+        openSkillEditModal(fieldName, playerIndex, rawSkills);
+      } catch (err) {
+        console.error('Ошибка при открытии редактора навыков:', err);
+        alert('Ошибка открытия редактора навыков — см. консоль.');
+      }
+      return;
+    }
+
+    // Обычная кнопка редактирования
+    const editBtn = ev.target.closest('.open-edit-btn');
+    if (editBtn) {
+      ev.preventDefault();
+      const rawName = editBtn.dataset.fieldName;
+      const playerIndex = Number(editBtn.dataset.player);
+      const rawValue = editBtn.dataset.value;
+      try {
+        let fieldName = safeParsePossibleJSON(rawName);
+        if (typeof fieldName === 'string' && fieldName.startsWith('"') && fieldName.endsWith('"')) {
+          try { fieldName = JSON.parse(fieldName); } catch(e) {}
+        }
+        const parsedValue = safeParsePossibleJSON(rawValue);
+        openEditModal(fieldName, playerIndex, parsedValue);
+      } catch (err) {
+        console.error('Ошибка при открытии редактора поля:', err);
+        alert('Ошибка открытия редактора поля — см. консоль.');
+      }
+      return;
+    }
+  });
+});
+
+</script>
+
+</body>
+</html>

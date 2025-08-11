@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кпоп бункер</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #0f1117;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --pink: #ec4899;
+      --pink-hover: #db2777;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0 20px;
+      text-align: center;
+    }
+    h1 {
+      color: var(--text);
+      margin-bottom: 40px;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      max-width: 320px;
+      padding: 15px 0;
+      font-size: 1.2em;
+      margin: 12px 0;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: 700;
+      color: white;
+      background-color: var(--pink);
+      transition: background-color 0.2s;
+      text-decoration: none;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn:hover { background-color: var(--pink-hover); }
+  </style>
+</head>
+<body>
+  <h1>Кпоп бункер</h1>
+  <a href="{{ url_for('create') }}" class="btn">Создать игру</a>
+  <a href="{{ url_for('join') }}" class="btn">Присоединиться к игре</a>
+</body>
+</html>
