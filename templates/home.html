@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Кпоп бункер</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #0f1117;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --pink: #ec4899;
+      --pink-hover: #db2777;
+      --border: #374151;
+      --shadow: rgba(0,0,0,0.4);
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      background: var(--panel);
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px var(--shadow);
+      width: 90%;
+      max-width: 420px;
+      box-sizing: border-box;
+      border: 1px solid var(--border);
+      margin: 0 20px;
+    }
+    h1 {
+      margin: 0 0 25px 0;
+      font-size: 2em;
+      text-align: center;
+      color: var(--text);
+    }
+    button.toggle-btn {
+      width: 48%;
+      padding: 12px 0;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-bottom: 15px;
+      color: white;
+      background: var(--pink);
+    }
+    button#join-btn { float: right; }
+    form {
+      display: none;
+      margin-top: 20px;
+    }
+    form.active { display: block; }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: var(--muted);
+      font-size: 1.05em;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 1.05em;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-sizing: border-box;
+      margin-bottom: 20px;
+      background: var(--panel-2);
+      color: var(--text);
+    }
+    input[type="text"]:focus, input[type="number"]:focus { outline: none; border-color: var(--pink); }
+    button.submit-btn {
+      width: 100%;
+      padding: 14px 0;
+      font-size: 1.2em;
+      background-color: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background-color 0.2s;
+    }
+    button.submit-btn:hover { background-color: var(--pink-hover); }
+    /* Мобильные */
+    @media (max-width: 480px) {
+      .container { padding: 20px 25px; }
+      h1 { font-size: 1.7em; }
+      button.toggle-btn { width: 100%; margin-bottom: 10px; float: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Кпоп бункер</h1>
+    <button id="create-btn" class="toggle-btn">Создать игру</button>
+    <button id="join-btn" class="toggle-btn">Присоединиться</button>
+
+    <form id="create-form" method="POST" class="active">
+      <input type="hidden" name="action" value="create" />
+      <label for="count">Количество человек:</label>
+      <input type="number" id="count" name="count" min="1" required />
+      <button type="submit" class="submit-btn">Создать игру</button>
+    </form>
+
+    <form id="join-form" method="POST">
+      <input type="hidden" name="action" value="join" />
+      <label for="code">Код игры:</label>
+      <input type="text" id="code" name="code" required placeholder="Введите код игры" />
+      <label for="player_number">Ваш номер игрока:</label>
+      <input type="number" id="player_number" name="player_number" min="1" required />
+      <button type="submit" class="submit-btn">Войти в игру</button>
+    </form>
+  </div>
+
+  <script>
+    const createBtn = document.getElementById('create-btn');
+    const joinBtn = document.getElementById('join-btn');
+    const createForm = document.getElementById('create-form');
+    const joinForm = document.getElementById('join-form');
+
+    createBtn.addEventListener('click', () => {
+      createForm.classList.add('active');
+      joinForm.classList.remove('active');
+      createBtn.style.backgroundColor = '#4caf50';
+      joinBtn.style.backgroundColor = '#2196f3';
+    });
+
+    joinBtn.addEventListener('click', () => {
+      joinForm.classList.add('active');
+      createForm.classList.remove('active');
+      joinBtn.style.backgroundColor = '#4caf50';
+      createBtn.style.backgroundColor = '#2196f3';
+    });
+  </script>
+</body>
+</html>
