@@ -82,7 +82,6 @@ def create_random_dicts_and_save(data: dict, data_card: dict, count: int, prefix
         print(f"✅ Сохранён файл {filename}")
 
 
-
 def create_random_dicts_one(data: dict, data_card: dict):
     keys = list(data.keys())
 
